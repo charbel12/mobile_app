@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "568049305754",
+    "project_id": "res-app-2495b",
+    "storage_bucket": "res-app-2495b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:568049305754:android:daf14c2537ef5ea9463723",
+        "android_client_info": {
+          "package_name": "reale.state.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD_H4MIKgIZkxMRnJDGSYkSuaHvR4AdiQk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
