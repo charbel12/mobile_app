@@ -16,18 +16,19 @@ import 'package:resapp/admin/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  print('Initializing Firebase...');
   await Firebase.initializeApp();
+  print('Firebase Initialized');
 
   FirebaseAuth.instance.authStateChanges().listen((User? user) {
     if (user == null) {
-
       print("User is logged out, possibly after a password reset.");
     } else {
       print("User is logged in: ${user.email}");
     }
   });
 
-  runApp(MyApp());
+  runApp(MyApp(isLoggedIn: isLoggedIn));
 }
 
 class MyApp extends StatefulWidget {
@@ -36,7 +37,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Widget _defaultHome = Scaffold(body: Center(child: CircularProgressIndicator()));
+  Widget _defaultHome =
+      Scaffold(body: Center(child: CircularProgressIndicator()));
 
   @override
   void initState() {
