@@ -2,42 +2,78 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:resapp/auth_service.dart';
-import 'package:resapp/sign_up_page.dart';
-
-class LoginPage extends StatefulWidget {
+import 'package:resapp/auth/login_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:quickalert/quickalert.dart';
+import 'package:resapp/tools/colors.dart';
+class SignUpPage extends StatefulWidget {
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _SignUpPageState createState() => _SignUpPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignUpPageState extends State<SignUpPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _verifyPasswordController = TextEditingController();
   String _errorMessage = '';
-  bool _obscureText = true; // To manage password visibility
 
-  void _login() async {
+  void _signUp() async {
     setState(() {
       _errorMessage = '';
     });
 
+    if (_passwordController.text.trim() != _verifyPasswordController.text.trim()) {
+      setState(() {
+        _errorMessage = 'Passwords do not match.';
+      });
+      return;
+    }
+
     try {
-      await _auth.signInWithEmailAndPassword(
+      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
+      User? user = userCredential.user;
+
+
+      if (user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'fullName': _fullNameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'phone': _phoneController.text.trim(),
+          'role': 'user',
+          'createdAt': Timestamp.now(),
+        });
+      }
+
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+      }
+      QuickAlert.show(
+        context: context,
+        type: QuickAlertType.success,
+        text: 'Account successfully created! Please check your inbox for verification',
+        confirmBtnColor: AppColors.res_green,
+        onConfirmBtnTap: () async{
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+          );
+        }
+      );
+
       if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
     } on FirebaseAuthException catch (e) {
       setState(() {
-        print('error is ${e.code}');
-        if (e.code == 'invalid-credential') {
-          _errorMessage = 'Invalid Credential';
-        } else if (e.code == 'wrong-password') {
-          _errorMessage = 'Incorrect password. Please try again.';
-        } else if (e.code == 'network-request-failed') {
-          _errorMessage = 'No internet connection. Please check your connection.';
+        if (e.code == 'weak-password') {
+          _errorMessage = 'Password is too weak.';
+        } else if (e.code == 'email-already-in-use') {
+          _errorMessage = 'Email is already in use.';
         } else {
           _errorMessage = 'An error occurred. Please try again.';
         }
@@ -55,10 +91,12 @@ class _LoginPageState extends State<LoginPage> {
       final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
       if (googleUser != null) {
-        print('Google Sign-In successful: ${googleUser.displayName}');
-        final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-        print('Google Access Token: ${googleAuth.accessToken}');
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final OAuthCredential credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        await _auth.signInWithCredential(credential);
       } else {
         print('Google Sign-In canceled');
       }
@@ -68,25 +106,12 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> signInWithFacebook() async {
-    print('Signing in with Facebook...');
     try {
       final LoginResult result = await FacebookAuth.instance.login();
-
       if (result.status == LoginStatus.success) {
-        print('Facebook Sign-In successful');
-
         final AccessToken accessToken = result.accessToken!;
-        print('Facebook Access Token: ${accessToken.token}');
-
-        // Create a Firebase credential from the Facebook access token
         final OAuthCredential credential = FacebookAuthProvider.credential(accessToken.token);
-
-        // Sign in to Firebase with the credential
-        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
-
-        print('Firebase Sign-In successful: ${userCredential.user?.displayName}');
-      } else if (result.status == LoginStatus.cancelled) {
-        print('Facebook Sign-In canceled');
+        await _auth.signInWithCredential(credential);
       } else {
         print('Facebook Sign-In failed: ${result.message}');
       }
@@ -100,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("Login", style: TextStyle(color: Colors.black)),
+        title: Text("Sign Up", style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.black),
@@ -118,8 +143,27 @@ class _LoginPageState extends State<LoginPage> {
             ),
             SizedBox(height: 40),
             Text(
-              'Welcome!',
+              'Create Account',
               style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            TextField(
+              controller: _fullNameController,
+              decoration: InputDecoration(
+                labelText: "Full Name",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                suffixIcon: Icon(Icons.person, color: Colors.grey),
+              ),
             ),
             SizedBox(height: 20),
             TextField(
@@ -134,15 +178,35 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color.fromARGB(255, 94, 202, 98), width: 2.0),
+                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
                   borderRadius: BorderRadius.circular(10.0),
                 ),
+                suffixIcon: Icon(Icons.email, color: Colors.grey),
+              ),
+            ),
+            SizedBox(height: 20),
+            TextField(
+              controller: _phoneController,
+              decoration: InputDecoration(
+                labelText: "Phone Number",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                suffixIcon: Icon(Icons.phone, color: Colors.grey),
               ),
             ),
             SizedBox(height: 20),
             TextField(
               controller: _passwordController,
-              obscureText: _obscureText, // Use the state to control visibility
+              obscureText: true,
               decoration: InputDecoration(
                 labelText: "Password",
                 border: OutlineInputBorder(
@@ -153,53 +217,41 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color.fromARGB(255, 94, 202, 98), width: 2.0),
+                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
                   borderRadius: BorderRadius.circular(10.0),
                 ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureText ? Icons.visibility_off : Icons.visibility,
-                    color: Colors.grey,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureText = !_obscureText; // Toggle the password visibility
-                    });
-                  },
-                ),
+                suffixIcon: Icon(Icons.lock, color: Colors.grey),
               ),
             ),
             SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => SignUpPage()),
-                    );
-                  },
-                  child: Text(
-                    "Forgot password?",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color.fromARGB(255, 94, 202, 98),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            TextField(
+              controller: _verifyPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: "Verify Password",
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10.0),
                 ),
-              ],
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                suffixIcon: Icon(Icons.lock, color: Colors.grey),
+              ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _login,
+              onPressed: _signUp,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 94, 202, 98),
+                backgroundColor: AppColors.res_green,
                 minimumSize: Size(double.infinity, 50),
               ),
               child: Text(
-                "Login",
+                "Sign Up",
                 style: TextStyle(fontSize: 14, color: Colors.white),
               ),
             ),
@@ -219,21 +271,21 @@ class _LoginPageState extends State<LoginPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Not a member? ",
+                        "Already a member? ",
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
+                          Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => SignUpPage()),
+                            MaterialPageRoute(builder: (context) => LoginPage()),
                           );
                         },
                         child: Text(
-                          "Register now",
+                          "Login now",
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color.fromARGB(255, 94, 202, 98),
+                            color: AppColors.res_green,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

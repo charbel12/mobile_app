@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:resapp/tools/colors.dart';
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
 
@@ -85,7 +85,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
       currentIndex: widget.currentIndex,
       onTap: _onItemTapped,
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: const Color.fromARGB(255, 94, 202, 98),
+      selectedItemColor: AppColors.res_green,
       unselectedItemColor: Colors.grey,
       showUnselectedLabels: true,
       items: const [
@@ -98,7 +98,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           label: 'Properties',
         ),
         BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle, size: 32, color: Color.fromARGB(255, 94, 202, 98)),
+          icon: Icon(Icons.add_circle, size: 32, color: AppColors.res_green),
           label: 'New',
         ),
         BottomNavigationBarItem(

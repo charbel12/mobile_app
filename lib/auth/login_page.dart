@@ -2,99 +2,150 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:resapp/login_page.dart';
+import 'package:resapp/auth/sign_up_page.dart';
+import 'package:quickalert/quickalert.dart';
+import 'package:resapp/tools/progress_indicator.dart';
+import 'package:resapp/tools/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class SignUpPage extends StatefulWidget {
+class LoginPage extends StatefulWidget {
   @override
-  _SignUpPageState createState() => _SignUpPageState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
+class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _verifyPasswordController = TextEditingController();
   String _errorMessage = '';
+  bool _obscureText = true;
 
-  void _signUp() async {
-    setState(() {
-      _errorMessage = '';
-    });
-
-    if (_passwordController.text.trim() != _verifyPasswordController.text.trim()) {
+  void _login() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
-        _errorMessage = 'Passwords do not match.';
+        _errorMessage = 'Email and password are required.';
       });
       return;
     }
-
+    showLoadingDialog(context, 'Signing In');
     try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
+      await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-
-      User? user = userCredential.user;
+      User? user = FirebaseAuth.instance.currentUser;
 
       if (user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-          'fullName': _fullNameController.text.trim(),
-          'email': _emailController.text.trim(),
-          'phone': _phoneController.text.trim(),
-          'role': 'user',
-          'createdAt': Timestamp.now(),
-        });
-      }
-
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/home');
-    } on FirebaseAuthException catch (e) {
-      setState(() {
-        if (e.code == 'weak-password') {
-          _errorMessage = 'Password is too weak.';
-        } else if (e.code == 'email-already-in-use') {
-          _errorMessage = 'Email is already in use.';
+        if (!user.emailVerified) {
+          hideLoadingDialog(context);
+          QuickAlert.show(
+            context: context,
+            title: 'Account is not yet verified!',
+            confirmBtnColor: AppColors.res_green,
+            headerBackgroundColor: AppColors.res_green,
+            showCancelBtn: true,
+            cancelBtnText: 'Resend',
+            confirmBtnText: 'Close',
+            onCancelBtnTap: () async {
+              await user.sendEmailVerification();
+              await FirebaseAuth.instance.signOut();
+              Navigator.of(context).pop();
+            },
+            onConfirmBtnTap: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.of(context).pop();
+            },
+            type: QuickAlertType.info,
+          );
         } else {
-          _errorMessage = 'An error occurred. Please try again.';
+          Map<String,dynamic>? userData = await _getUserDataFromFirestore(user.uid);
+          String? role = userData?['role'];
+          if (userData != null) {
+            await _storeUserInSession(user, userData);
+            hideLoadingDialog(context);
+            if (role == 'admin') {
+              Navigator.pushReplacementNamed(context, '/admin');
+            } else if (role == 'contractor') {
+              Navigator.pushReplacementNamed(context, '/contractor');
+            } else {
+              Navigator.pushReplacementNamed(context, '/home');
+            }
+          }
         }
-      });
-    } catch (e) {
+      }
+    } on FirebaseAuthException catch (e) {
+      hideLoadingDialog(context);
       setState(() {
-        _errorMessage = 'An unexpected error occurred.';
+        _errorMessage = e.message ?? 'An error occurred. Please try again.';
       });
     }
   }
+
+  Future<Map<String,dynamic>?> _getUserDataFromFirestore(String uid) async {
+    try {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (snapshot.exists) {
+        Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
+        return userData;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _storeUserInSession(User user, Map<String,dynamic> data ) async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('userEmail', user.email ?? '');
+    prefs.setString('userRole', data['role']);
+    prefs.setString('userId', user.uid);
+    prefs.setString('phoneNumber', data['phone'] ?? '');
+    prefs.setString('fullName', data['fullName'] ?? '');
+    prefs.setString('userId', user.uid);
+  }
+
 
   Future<void> signInWithGoogle() async {
-    try {
-      final GoogleSignIn googleSignIn = GoogleSignIn();
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+    final GoogleSignIn googleSignIn = GoogleSignIn();
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
 
-      if (googleUser != null) {
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-        final OAuthCredential credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        await _auth.signInWithCredential(credential);
-      } else {
-        print('Google Sign-In canceled');
-      }
-    } catch (e) {
-      print('Error during Google Sign-In: $e');
+    if (googleUser == null) {
+      print('Google Sign-In canceled');
+      return;
     }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    await FirebaseAuth.instance.signInWithCredential(credential);
   }
 
+
   Future<void> signInWithFacebook() async {
+    print('Signing in with Facebook...');
     try {
       final LoginResult result = await FacebookAuth.instance.login();
+
       if (result.status == LoginStatus.success) {
+        print('Facebook Sign-In successful');
+
         final AccessToken accessToken = result.accessToken!;
+        print('Facebook Access Token: ${accessToken.token}');
+
+        // Create a Firebase credential from the Facebook access token
         final OAuthCredential credential = FacebookAuthProvider.credential(accessToken.token);
-        await _auth.signInWithCredential(credential);
+
+        // Sign in to Firebase with the credential
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+        print('Firebase Sign-In successful: ${userCredential.user?.displayName}');
+      } else if (result.status == LoginStatus.cancelled) {
+        print('Facebook Sign-In canceled');
       } else {
         print('Facebook Sign-In failed: ${result.message}');
       }
@@ -108,7 +159,7 @@ class _SignUpPageState extends State<SignUpPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: Text("Sign Up", style: TextStyle(color: Colors.black)),
+        title: Text("Login", style: TextStyle(color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: IconThemeData(color: Colors.black),
@@ -124,29 +175,10 @@ class _SignUpPageState extends State<SignUpPage> {
                 height: 200,
               ),
             ),
-            SizedBox(height: 40),
+            SizedBox(height: 10),
             Text(
-              'Create Account',
+              'Welcome!',
               style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _fullNameController,
-              decoration: InputDecoration(
-                labelText: "Full Name",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color.fromARGB(255, 94, 202, 98), width: 2.0),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                suffixIcon: Icon(Icons.person, color: Colors.grey),
-              ),
             ),
             SizedBox(height: 20),
             TextField(
@@ -161,35 +193,15 @@ class _SignUpPageState extends State<SignUpPage> {
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color.fromARGB(255, 94, 202, 98), width: 2.0),
+                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
                   borderRadius: BorderRadius.circular(10.0),
                 ),
-                suffixIcon: Icon(Icons.email, color: Colors.grey),
-              ),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _phoneController,
-              decoration: InputDecoration(
-                labelText: "Phone Number",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color.fromARGB(255, 94, 202, 98), width: 2.0),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                suffixIcon: Icon(Icons.phone, color: Colors.grey),
               ),
             ),
             SizedBox(height: 20),
             TextField(
               controller: _passwordController,
-              obscureText: true,
+              obscureText: _obscureText,
               decoration: InputDecoration(
                 labelText: "Password",
                 border: OutlineInputBorder(
@@ -200,41 +212,53 @@ class _SignUpPageState extends State<SignUpPage> {
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color.fromARGB(255, 94, 202, 98), width: 2.0),
+                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
                   borderRadius: BorderRadius.circular(10.0),
                 ),
-                suffixIcon: Icon(Icons.lock, color: Colors.grey),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility_off : Icons.visibility,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText; // Toggle the password visibility
+                    });
+                  },
+                ),
               ),
             ),
             SizedBox(height: 20),
-            TextField(
-              controller: _verifyPasswordController,
-              obscureText: true,
-              decoration: InputDecoration(
-                labelText: "Verify Password",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10.0),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SignUpPage()),
+                    );
+                  },
+                  child: Text(
+                    "Forgot password?",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.res_green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-                enabledBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Color.fromARGB(255, 94, 202, 98), width: 2.0),
-                  borderRadius: BorderRadius.circular(10.0),
-                ),
-                suffixIcon: Icon(Icons.lock, color: Colors.grey),
-              ),
+              ],
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _signUp,
+              onPressed: _login,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color.fromARGB(255, 94, 202, 98),
+                backgroundColor: AppColors.res_green,
                 minimumSize: Size(double.infinity, 50),
               ),
               child: Text(
-                "Sign Up",
+                "Login",
                 style: TextStyle(fontSize: 14, color: Colors.white),
               ),
             ),
@@ -254,21 +278,21 @@ class _SignUpPageState extends State<SignUpPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Already a member? ",
+                        "Not a member? ",
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pushReplacement(
+                          Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => LoginPage()),
+                            MaterialPageRoute(builder: (context) => SignUpPage()),
                           );
                         },
                         child: Text(
-                          "Login now",
+                          "Register now",
                           style: TextStyle(
                             fontSize: 16,
-                            color: Color.fromARGB(255, 94, 202, 98),
+                            color: AppColors.res_green,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

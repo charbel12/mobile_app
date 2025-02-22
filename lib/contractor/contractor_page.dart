@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resapp/tools/bottom_nav.dart';
 
-class PropertiesPage extends StatelessWidget {
+class ContractorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(

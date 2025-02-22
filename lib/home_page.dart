@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:resapp/bottom_nav.dart';
+import 'package:resapp/tools/bottom_nav.dart';
 
 class HomePage extends StatefulWidget {
   @override

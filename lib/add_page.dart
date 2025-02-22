@@ -3,13 +3,14 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:resapp/tools/colors.dart';
 
-class AddPage extends StatefulWidget {
+class AddProperty extends StatefulWidget {
   @override
-  _AddPageState createState() => _AddPageState();
+  _AddPropertyState createState() => _AddPropertyState();
 }
 
-class _AddPageState extends State<AddPage> {
+class _AddPropertyState extends State<AddProperty> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   final TextEditingController areaController = TextEditingController();
@@ -22,7 +23,7 @@ class _AddPageState extends State<AddPage> {
 
   void pickImages() async {
     final ImagePicker _picker = ImagePicker();
-    final List<XFile> pickedImages = await _picker.pickMultiImage() ?? [];
+    final List<XFile> pickedImages = await _picker.pickMultiImage();
     setState(() {
       images.addAll(pickedImages);
     });
@@ -43,10 +44,9 @@ class _AddPageState extends State<AddPage> {
         return;
       }
 
-      // Upload images to Firebase Storage
       List<String> imageUrls = [];
       for (var image in images) {
-        final File file = File(image.path); // Convert XFile to File
+        final File file = File(image.path);
         final ref = FirebaseStorage.instance.ref().child(
             'property_images/${DateTime.now().millisecondsSinceEpoch}.jpg');
         await ref.putFile(file).then((taskSnapshot) async {
@@ -54,8 +54,6 @@ class _AddPageState extends State<AddPage> {
           imageUrls.add(downloadUrl);
         });
       }
-
-      // Save data to Firestore
       FirebaseFirestore.instance.collection('properties').add({
         'title': titleController.text,
         'location': locationController.text,
@@ -140,7 +138,7 @@ class _AddPageState extends State<AddPage> {
               ElevatedButton(
                 onPressed: saveData,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color.fromARGB(255, 94, 202, 98),
+                  backgroundColor: AppColors.res_green,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -187,7 +185,7 @@ class _AddPageState extends State<AddPage> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide(
-              color: Color.fromARGB(255, 94, 202, 98),
+              color: AppColors.res_green,
               width: 2.0), // Green border when selected
         ),
         enabledBorder: OutlineInputBorder(
@@ -199,7 +197,7 @@ class _AddPageState extends State<AddPage> {
         fillColor: Colors.white, // Keeps input background white
       ),
       keyboardType: isNumber ? TextInputType.number : TextInputType.text,
-      style: TextStyle(color: Colors.white),
+      style: TextStyle(color: Colors.black),
       validator: (value) => value?.isEmpty ?? true ? '$hint is required' : null,
     );
   }
@@ -208,7 +206,7 @@ class _AddPageState extends State<AddPage> {
     return ChoiceChip(
       label: Text(label, style: TextStyle(color: Colors.black)),
       selected: selectedUtilities.contains(label),
-      selectedColor: Color.fromARGB(255, 94, 202, 98),
+      selectedColor: AppColors.res_green,
       backgroundColor: Colors.white,
       onSelected: (selected) {
         setState(() {
