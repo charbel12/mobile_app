@@ -13,6 +13,7 @@ import 'package:resapp/services_page.dart';
 import 'package:resapp/profile_page.dart';
 import 'package:resapp/admin/add-service.dart';
 import 'package:resapp/admin/services.dart';
+import 'package:resapp/admin/admin_profile.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -85,6 +86,7 @@ class _MyAppState extends State<MyApp> {
         '/profile': (context) => ProfilePage(),
         '/admin': (context) => AdminPage(),
         '/admin/services': (context) => AdminServicePage(),
+        '/admin/profile': (context) => AdminProfilePage(),
         '/admin/add-service': (context) => AddServicePage(),
       },
     );

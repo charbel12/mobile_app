@@ -26,7 +26,7 @@ class _BottomNavBarState extends State<AdminNav> {
           Navigator.pushReplacementNamed(context, '/');
           break;
         case 4:
-          Navigator.pushReplacementNamed(context, '/profile');
+          Navigator.pushReplacementNamed(context, '/admin/profile');
           break;
       }
     }
@@ -97,10 +97,6 @@ class _BottomNavBarState extends State<AdminNav> {
         BottomNavigationBarItem(
           icon: Icon(Icons.sell),
           label: 'Services',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.add_circle, size: 32, color: AppColors.res_green),
-          label: 'New',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.miscellaneous_services),
