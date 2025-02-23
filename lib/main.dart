@@ -20,15 +20,7 @@ void main() async {
   await Firebase.initializeApp();
   print('Firebase Initialized');
 
-  FirebaseAuth.instance.authStateChanges().listen((User? user) {
-    if (user == null) {
-      print("User is logged out, possibly after a password reset.");
-    } else {
-      print("User is logged in: ${user.email}");
-    }
-  });
-
-  runApp(MyApp(isLoggedIn: isLoggedIn));
+  runApp(MyApp());
 }
 
 class MyApp extends StatefulWidget {
@@ -47,15 +39,17 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _checkLoginStatus() async {
+    WidgetsFlutterBinding.ensureInitialized();
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
 
-    if (isLoggedIn) {
-      User? user = FirebaseAuth.instance.currentUser;
+    User? user = FirebaseAuth.instance.currentUser;
 
-      if (user != null) {
-        String? role = await AuthService.getUserRole();
+    if (user != null) {
+      print("User is logged in: ${user.email}");
 
+      String? role = await AuthService.getUserRole();
+
+      setState(() {
         if (role == 'admin') {
           _defaultHome = AdminPage();
         } else if (role == 'contractor') {
@@ -63,15 +57,13 @@ class _MyAppState extends State<MyApp> {
         } else {
           _defaultHome = HomePage();
         }
-      } else {
-        _defaultHome = LoginPage();
-      }
+      });
+      prefs.setBool('isLoggedIn', true);
     } else {
-      _defaultHome = LoginPage();
-    }
-
-    if (mounted) {
-      setState(() {});
+      print("User is logged out");
+      setState(() {
+        _defaultHome = LoginPage();
+      });
     }
   }
 

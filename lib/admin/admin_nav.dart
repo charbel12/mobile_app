@@ -26,7 +26,7 @@ class _BottomNavBarState extends State<AdminNav> {
           Navigator.pushReplacementNamed(context, '/');
           break;
         case 4:
-          Navigator.pushReplacementNamed(context, '/');
+          Navigator.pushReplacementNamed(context, '/profile');
           break;
       }
     }

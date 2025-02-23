@@ -25,6 +25,8 @@ class ProfileData {
 }
 
 class ProfilePage extends StatefulWidget {
+  const ProfilePage({super.key});
+
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
@@ -49,7 +51,7 @@ class _ProfilePageState extends State<ProfilePage> {
     await AuthService.setLoggedIn(false);
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (context) => LoginPage()),
-          (Route<dynamic> route) => false,
+      (Route<dynamic> route) => false,
     );
   }
 
@@ -58,15 +60,14 @@ class _ProfilePageState extends State<ProfilePage> {
     if (user != null) {
       await _auth.sendPasswordResetEmail(email: user.email!);
       QuickAlert.show(
-        context: context,
-        type: QuickAlertType.success,
-        text: 'You will receive a password reset, please check your email!',
-        confirmBtnText: 'Okay',
-        confirmBtnColor: AppColors.res_green,
-        onConfirmBtnTap: () async {
-          _logout(context);
-        }
-      );
+          context: context,
+          type: QuickAlertType.success,
+          text: 'You will receive a password reset, please check your email!',
+          confirmBtnText: 'Okay',
+          confirmBtnColor: AppColors.res_green,
+          onConfirmBtnTap: () async {
+            _logout(context);
+          });
     }
   }
 
@@ -74,9 +75,12 @@ class _ProfilePageState extends State<ProfilePage> {
     print('loading user data');
     User? user = _auth.currentUser;
     if (user != null) {
-      DocumentSnapshot userData =
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      DocumentSnapshot userData = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       if (userData.exists) {
+        print(userData);
         _nameController.text = userData['fullName'] ?? '';
         _phoneController.text = userData['phone'] ?? '';
       }
@@ -87,7 +91,10 @@ class _ProfilePageState extends State<ProfilePage> {
     User? user = _auth.currentUser;
     if (user != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .update({
           'fullName': _nameController.text,
           'phone': _phoneController.text,
         });
@@ -99,7 +106,6 @@ class _ProfilePageState extends State<ProfilePage> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setString('phoneNumber', _phoneController.text);
         prefs.setString('fullName', _nameController.text);
-
 
         // _loadUserData();
       } catch (e) {
@@ -126,7 +132,6 @@ class _ProfilePageState extends State<ProfilePage> {
         email: email, role: role, id: id, phoneNum: phoneNum, name: name);
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,8 +145,7 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: _updateUserData,
             ),
           IconButton(
-
-            icon: Icon(edit ?  Icons.close:  Icons.edit),
+            icon: Icon(edit ? Icons.close : Icons.edit),
             onPressed: () {
               setState(() {
                 edit = !edit;
@@ -181,58 +185,66 @@ class _ProfilePageState extends State<ProfilePage> {
                   return snapshot.connectionState == ConnectionState.waiting
                       ? CircularProgressIndicator()
                       : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ProfileField(
-                        label: "Full Name",
-                        controller: _nameController,
-                        value: snapshot.data?.name ?? 'N/A',
-                        enabled: edit,
-                      ),
-                      ProfileField(
-                        label: "Phone Number",
-                        controller: _phoneController,
-                        value: snapshot.data?.phoneNum ?? 'N/A',
-                        enabled: edit,
-                      ),
-                      ProfileField(
-                        label: "Email",
-                        controller: _emailController,
-                        value: snapshot.data?.email ?? 'N/A',
-                        enabled: false,
-                      ),
-                      Row(
-                        spacing: 20,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children:[
-                          Expanded(child: ElevatedButton.icon(
-                              onPressed: () {
-                                _logout(context);
-                              },
-                              icon: const Icon(Icons.logout, color: Color.fromARGB(
-                                  255, 0, 0, 0)), // Icon
-                              label: const Text('Logout', style: TextStyle(color:Color.fromARGB(
-                                  255, 0, 0, 0) )),        // Text
-                              style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ProfileField(
+                              label: "Full Name",
+                              controller: _nameController,
+                              value: snapshot.data?.name ?? 'N/A',
+                              enabled: edit,
                             ),
-                          ),
-                          Expanded(child: ElevatedButton.icon(
-                              onPressed: () {
-                                _resetPassword(context);
-                              },
-                              icon: const Icon(Icons.lock, color: Color.fromARGB(
-                                  255, 0, 0, 0)), // Icon
-                              label: const Text('Reset Password', style: TextStyle(color:Color.fromARGB(
-                                  255, 0, 0, 0) )),        // Text
-                              style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))
-                          ))
-                      ]
-                      ),
-
-                    ],
-                  );
+                            ProfileField(
+                              label: "Phone Number",
+                              controller: _phoneController,
+                              value: snapshot.data?.phoneNum ?? 'N/A',
+                              enabled: edit,
+                            ),
+                            ProfileField(
+                              label: "Email",
+                              controller: _emailController,
+                              value: snapshot.data?.email ?? 'N/A',
+                              enabled: false,
+                            ),
+                            Row(
+                                spacing: 20,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          _logout(context);
+                                        },
+                                        icon: const Icon(Icons.logout,
+                                            color: Color.fromARGB(
+                                                255, 0, 0, 0)), // Icon
+                                        label: const Text('Logout',
+                                            style: TextStyle(
+                                                color: Color.fromARGB(
+                                                    255, 0, 0, 0))), // Text
+                                        style: ElevatedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 12))),
+                                  ),
+                                  Expanded(
+                                      child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            _resetPassword(context);
+                                          },
+                                          icon: const Icon(Icons.lock,
+                                              color: Color.fromARGB(
+                                                  255, 0, 0, 0)), // Icon
+                                          label: const Text('Reset Password',
+                                              style: TextStyle(
+                                                  color: Color.fromARGB(
+                                                      255, 0, 0, 0))), // Text
+                                          style: ElevatedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 16,
+                                                      vertical: 12))))
+                                ]),
+                          ],
+                        );
                 },
               ),
             ),
@@ -287,7 +299,8 @@ class ProfileField extends StatelessWidget {
                 borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
                 borderRadius: BorderRadius.circular(10.0),
               ),
-              contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
             ),
           ),
           SizedBox(height: 10),

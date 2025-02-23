@@ -8,6 +8,7 @@ import 'package:resapp/tools/progress_indicator.dart';
 import 'package:resapp/tools/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:resapp/tools/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -59,10 +60,12 @@ class _LoginPageState extends State<LoginPage> {
             type: QuickAlertType.info,
           );
         } else {
-          Map<String,dynamic>? userData = await _getUserDataFromFirestore(user.uid);
+          Map<String, dynamic>? userData =
+              await _getUserDataFromFirestore(user.uid);
           String? role = userData?['role'];
           if (userData != null) {
             await _storeUserInSession(user, userData);
+            await AuthService.setLoggedIn(true);
             hideLoadingDialog(context);
             if (role == 'admin') {
               Navigator.pushReplacementNamed(context, '/admin');
@@ -82,9 +85,10 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<Map<String,dynamic>?> _getUserDataFromFirestore(String uid) async {
+  Future<Map<String, dynamic>?> _getUserDataFromFirestore(String uid) async {
     try {
-      DocumentSnapshot snapshot = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      DocumentSnapshot snapshot =
+          await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (snapshot.exists) {
         Map<String, dynamic> userData = snapshot.data() as Map<String, dynamic>;
         return userData;
@@ -95,8 +99,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<void> _storeUserInSession(User user, Map<String,dynamic> data ) async {
-
+  Future<void> _storeUserInSession(User user, Map<String, dynamic> data) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('userEmail', user.email ?? '');
     prefs.setString('userRole', data['role']);
@@ -105,7 +108,6 @@ class _LoginPageState extends State<LoginPage> {
     prefs.setString('fullName', data['fullName'] ?? '');
     prefs.setString('userId', user.uid);
   }
-
 
   Future<void> signInWithGoogle() async {
     final GoogleSignIn googleSignIn = GoogleSignIn();
@@ -116,7 +118,8 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
     final AuthCredential credential = GoogleAuthProvider.credential(
       accessToken: googleAuth.accessToken,
       idToken: googleAuth.idToken,
@@ -124,7 +127,6 @@ class _LoginPageState extends State<LoginPage> {
 
     await FirebaseAuth.instance.signInWithCredential(credential);
   }
-
 
   Future<void> signInWithFacebook() async {
     print('Signing in with Facebook...');
@@ -138,12 +140,15 @@ class _LoginPageState extends State<LoginPage> {
         print('Facebook Access Token: ${accessToken.token}');
 
         // Create a Firebase credential from the Facebook access token
-        final OAuthCredential credential = FacebookAuthProvider.credential(accessToken.token);
+        final OAuthCredential credential =
+            FacebookAuthProvider.credential(accessToken.token);
 
         // Sign in to Firebase with the credential
-        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+        UserCredential userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
 
-        print('Firebase Sign-In successful: ${userCredential.user?.displayName}');
+        print(
+            'Firebase Sign-In successful: ${userCredential.user?.displayName}');
       } else if (result.status == LoginStatus.cancelled) {
         print('Facebook Sign-In canceled');
       } else {
@@ -178,7 +183,10 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(height: 10),
             Text(
               'Welcome!',
-              style: TextStyle(color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 20),
             TextField(
@@ -193,7 +201,8 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
+                  borderSide:
+                      BorderSide(color: AppColors.res_green, width: 2.0),
                   borderRadius: BorderRadius.circular(10.0),
                 ),
               ),
@@ -212,7 +221,8 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: AppColors.res_green, width: 2.0),
+                  borderSide:
+                      BorderSide(color: AppColors.res_green, width: 2.0),
                   borderRadius: BorderRadius.circular(10.0),
                 ),
                 suffixIcon: IconButton(
@@ -222,7 +232,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   onPressed: () {
                     setState(() {
-                      _obscureText = !_obscureText; // Toggle the password visibility
+                      _obscureText =
+                          !_obscureText; // Toggle the password visibility
                     });
                   },
                 ),
@@ -285,7 +296,8 @@ class _LoginPageState extends State<LoginPage> {
                         onTap: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => SignUpPage()),
+                            MaterialPageRoute(
+                                builder: (context) => SignUpPage()),
                           );
                         },
                         child: Text(
