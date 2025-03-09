@@ -72,64 +72,59 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    print('loading user data');
-    User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot userData = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      if (userData.exists) {
-        print(userData);
-        _nameController.text = userData['fullName'] ?? '';
-        _phoneController.text = userData['phone'] ?? '';
+    try {
+      Map<String, dynamic>? userData = await AuthService.getUserData();
+      if (userData != null) {
+        setState(() {
+          _nameController.text = userData['fullName'] ?? '';
+          _phoneController.text = userData['phone'] ?? '';
+          _emailController.text = userData['email'] ?? '';
+        });
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => LoginPage()),
+        );
       }
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error loading user data: $e';
+      });
     }
   }
 
   Future<void> _updateUserData() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      try {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .update({
-          'fullName': _nameController.text,
-          'phone': _phoneController.text,
-        });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Profile updated successfully!'),
-          backgroundColor: Colors.green,
-        ));
+    try {
+      await AuthService.updateUserData({
+        'fullName': _nameController.text,
+        'phone': _phoneController.text,
+      });
 
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setString('phoneNumber', _phoneController.text);
-        prefs.setString('fullName', _nameController.text);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Profile updated successfully!'),
+        backgroundColor: Colors.green,
+      ));
 
-        // _loadUserData();
-      } catch (e) {
-        setState(() {
-          _errorMessage = 'Error updating profile: $e';
-        });
-      }
       setState(() {
         edit = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Error updating profile: $e';
       });
     }
   }
 
   Future<ProfileData> readData() async {
+    Map<String, dynamic>? userData = await AuthService.getUserData();
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    String? email = prefs.getString('userEmail') ?? 'N/A';
-    String? role = prefs.getString('userRole') ?? 'N/A';
-    String? id = prefs.getString('userId') ?? 'N/A';
-    String? phoneNum = prefs.getString('phoneNumber') ?? 'N/A';
-    String? name = prefs.getString('fullName') ?? 'N/A';
-
     return ProfileData(
-        email: email, role: role, id: id, phoneNum: phoneNum, name: name);
+      email: userData?['email'] ?? prefs.getString('userEmail') ?? 'N/A',
+      role: userData?['role'] ?? prefs.getString('userRole') ?? 'N/A',
+      id: userData?['id'] ?? prefs.getString('userId') ?? 'N/A',
+      phoneNum: userData?['phone'] ?? prefs.getString('phoneNumber') ?? 'N/A',
+      name: userData?['fullName'] ?? prefs.getString('fullName') ?? 'N/A',
+    );
   }
 
   @override

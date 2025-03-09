@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resapp/tools/colors.dart';
+
 class BottomNavBar extends StatefulWidget {
   final int currentIndex;
 
@@ -36,46 +37,85 @@ class _BottomNavBarState extends State<BottomNavBar> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Choose an option"),
+          title: Text(
+            "What would you like to list?",
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(
-                leading: Icon(Icons.home),
-                title: Text("Add Property"),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/add-property');
-                },
+              _buildOptionGroup(
+                "Property",
+                [
+                  _DialogOption(
+                    icon: Icons.sell,
+                    title: "List for Sale",
+                    route: '/property-sale',
+                  ),
+                  _DialogOption(
+                    icon: Icons.home,
+                    title: "List for Rent",
+                    route: '/property-rent',
+                  ),
+                  _DialogOption(
+                    icon: Icons.swap_horiz,
+                    title: "List for Exchange",
+                    route: '/property-exchange',
+                  ),
+                ],
               ),
-              ListTile(
-                leading: Icon(Icons.sell),
-                title: Text("Add Listing"),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/add-listing');
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.house),
-                title: Text("Rent Property"),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/rent-property');
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.swap_horiz),
-                title: Text("Exchange Property"),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/exchange-property');
-                },
+              SizedBox(height: 16),
+              _buildOptionGroup(
+                "Land",
+                [
+                  _DialogOption(
+                    icon: Icons.landscape,
+                    title: "List for Sale",
+                    route: '/land-sale',
+                  ),
+                  _DialogOption(
+                    icon: Icons.terrain,
+                    title: "List for Rent",
+                    route: '/land-rent',
+                  ),
+                ],
               ),
             ],
           ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildOptionGroup(String title, List<_DialogOption> options) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey[800],
+          ),
+        ),
+        SizedBox(height: 8),
+        ...options.map((option) => ListTile(
+              leading: Icon(option.icon, color: AppColors.res_green),
+              title: Text(option.title),
+              contentPadding: EdgeInsets.symmetric(horizontal: 8),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, option.route);
+              },
+            )),
+      ],
     );
   }
 
@@ -112,4 +152,16 @@ class _BottomNavBarState extends State<BottomNavBar> {
       ],
     );
   }
+}
+
+class _DialogOption {
+  final IconData icon;
+  final String title;
+  final String route;
+
+  const _DialogOption({
+    required this.icon,
+    required this.title,
+    required this.route,
+  });
 }

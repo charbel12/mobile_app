@@ -22,10 +22,10 @@ class _BottomNavBarState extends State<AdminNav> {
         case 1:
           Navigator.pushReplacementNamed(context, '/admin/services');
           break;
-        case 3:
+        case 2:
           Navigator.pushReplacementNamed(context, '/');
           break;
-        case 4:
+        case 3:
           Navigator.pushReplacementNamed(context, '/admin/profile');
           break;
       }

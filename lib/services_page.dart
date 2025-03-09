@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'service_details_page.dart';
+import 'package:resapp/service_details_page.dart';
 import 'package:resapp/tools/bottom_nav.dart';
+import 'package:resapp/tools/colors.dart';
+import 'dart:io';
 
-class ServicesPage extends StatelessWidget {
+class ServicesPage extends StatefulWidget {
+  @override
+  _ServicesPageState createState() => _ServicesPageState();
+}
+
+class _ServicesPageState extends State<ServicesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -16,11 +23,66 @@ class ServicesPage extends StatelessWidget {
       body: StreamBuilder(
         stream: FirebaseFirestore.instance.collection('services').snapshots(),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 48, color: Colors.red),
+                  SizedBox(height: 16),
+                  Text(
+                    'Error loading services',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () {
+                      // This will trigger a rebuild of the StreamBuilder
+                      setState(() {});
+                    },
+                    child: Text('Try Again'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.res_green,
+                    ),
+                  ),
+                ],
+              ),
+            );
           }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(AppColors.res_green),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Loading services...',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            );
+          }
+
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text("No services available"));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.inbox, size: 48, color: Colors.grey[400]),
+                  SizedBox(height: 16),
+                  Text(
+                    'No services available',
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+            );
           }
 
           return Padding(
@@ -64,7 +126,7 @@ class ServicesPage extends StatelessWidget {
 
 class ServiceCard extends StatelessWidget {
   final String title;
-  final String imgPath;
+  final String? imgPath;
   final String description;
   final VoidCallback onTap;
 
@@ -87,31 +149,121 @@ class ServiceCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
-              child: CachedNetworkImage(
-                imageUrl: imgPath,
-                height: 120,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  height: 120,
-                  width: double.infinity,
-                  color: Colors.grey[300],
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                errorWidget: (context, url, error) => Container(
-                  height: 120,
-                  width: double.infinity,
-                  color: Colors.grey[300],
-                  child: Center(child: Icon(Icons.broken_image, size: 50)),
-                ),
-              ),
+              child: imgPath != null && imgPath!.isNotEmpty
+                  ? imgPath!.startsWith('http') || imgPath!.startsWith('https')
+                      ? CachedNetworkImage(
+                          imageUrl: imgPath!,
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            height: 120,
+                            width: double.infinity,
+                            color: Colors.grey[200],
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.res_green),
+                                  ),
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Loading...',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          errorWidget: (context, url, error) => Container(
+                            height: 120,
+                            width: double.infinity,
+                            color: Colors.grey[200],
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error_outline,
+                                    size: 32, color: Colors.grey[400]),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Error loading image',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      : Image.file(
+                          File(imgPath!),
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                            height: 120,
+                            width: double.infinity,
+                            color: Colors.grey[200],
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.error_outline,
+                                    size: 32, color: Colors.grey[400]),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Error loading image',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                  : Container(
+                      height: 120,
+                      width: double.infinity,
+                      color: Colors.grey[200],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.image_not_supported,
+                              size: 32, color: Colors.grey[400]),
+                          SizedBox(height: 4),
+                          Text(
+                            'No image available',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 title,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Colors.black87,
+                ),
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
             Padding(

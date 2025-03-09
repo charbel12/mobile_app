@@ -72,20 +72,30 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
   }
 
   Future<void> _loadUserData() async {
-    print('loading user data');
+    print('Checking user authentication status...');
     User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot userData = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      if (userData.exists) {
-        print(userData);
-        _nameController.text = userData['fullName'] ?? '';
-        _phoneController.text = userData['phone'] ?? '';
-      }
+
+    if (user == null) {
+      print('No user found! Redirecting to login page.');
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => LoginPage()),
+      );
+      return;
+    }
+
+    print('User is authenticated: ${user.uid}');
+
+    DocumentSnapshot userData = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    if (userData.exists) {
+      _nameController.text = userData['fullName'] ?? '';
+      _phoneController.text = userData['phone'] ?? '';
     }
   }
+
 
   Future<void> _updateUserData() async {
     User? user = _auth.currentUser;
@@ -251,7 +261,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
           ],
         ),
       ),
-      bottomNavigationBar: AdminNav(currentIndex: 4),
+      bottomNavigationBar: AdminNav(currentIndex: 3),
     );
   }
 }

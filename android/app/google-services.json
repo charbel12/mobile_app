@@ -1,26 +1,36 @@
 {
   "project_info": {
-    "project_number": "568049305754",
-    "project_id": "res-app-2495b",
-    "storage_bucket": "res-app-2495b.firebasestorage.app"
+    "project_number": "255995518015",
+    "project_id": "real-estate-app-57468",
+    "storage_bucket": "real-estate-app-57468.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:568049305754:android:daf14c2537ef5ea9463723",
+        "mobilesdk_app_id": "1:255995518015:android:efbbf027ef15e5bdcbec8a",
         "android_client_info": {
-          "package_name": "reale.state.app"
+          "package_name": "app.realestate"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "255995518015-qfjfbk4bnb3i2o2k8ra77mmusk51r131.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyD_H4MIKgIZkxMRnJDGSYkSuaHvR4AdiQk"
+          "current_key": "AIzaSyAMjlrrAHKQBHIG1zbmYL6ReqGem1D1YHk"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "255995518015-qfjfbk4bnb3i2o2k8ra77mmusk51r131.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
