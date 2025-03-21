@@ -30,33 +30,53 @@ class AdminServicePage extends StatelessWidget {
               var serviceData = service.data() as Map<String, dynamic>;
               return Padding(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-                child: ListTile(
-                  leading: serviceData['imageUrl'] != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(serviceData['imageUrl'],
-                              width: 60, height: 60, fit: BoxFit.cover),
-                        )
-                      : Icon(Icons.image, size: 60),
-                  title: Text(
-                    serviceData['title'] ?? 'No Title',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                child: Card(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ServiceDetailsPage(
-                          serviceId: service.id,
-                          serviceData: serviceData,
-                        ),
+                  elevation: 5,
+                  child: ListTile(
+                    contentPadding: EdgeInsets.all(16),
+                    leading: serviceData['img_path'] != null
+                        ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        serviceData['img_path'],
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
                       ),
-                    );
-                  },
-                  onLongPress: () {
-                    _showDeleteDialog(context, service.id);
-                  },
+                    )
+                        : Icon(Icons.image, size: 60),
+                    title: Text(
+                      serviceData['title'] ?? 'No Title',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    subtitle: Text(
+                      serviceData['description'] ?? 'No description available',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ServiceDetailsPage(
+                            serviceId: service.id,
+                            serviceData: serviceData,
+                          ),
+                        ),
+                      );
+                    },
+                    onLongPress: () {
+                      _showDeleteDialog(context, service.id);
+                    },
+                  ),
                 ),
               );
             },
@@ -133,24 +153,61 @@ class ServiceDetailsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            serviceData['imageUrl'] != null
+            // Image Section
+            serviceData['img_path'] != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      serviceData['imageUrl'],
-                      width: double.infinity,
-                      height: 200,
-                      fit: BoxFit.cover,
-                    ),
-                  )
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                serviceData['img_path'],
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            )
                 : Icon(Icons.image, size: 100),
             SizedBox(height: 16),
+
+            // Title Section
             Text(
               serviceData['title'] ?? 'No Title',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
             ),
             SizedBox(height: 8),
-            Text(serviceData['description'] ?? 'No description available'),
+
+            // Description Section
+            Text(
+              serviceData['description'] ?? 'No description available',
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+            SizedBox(height: 16),
+
+            // Created At Section
+            Text(
+              'Created At: ${serviceData['createdAt']?.toDate() != null ? (serviceData['createdAt']?.toDate().toLocal().toString()) : 'No date available'}',
+              style: TextStyle(color: Colors.grey[600]),
+            ),
+            SizedBox(height: 16),
+
+            // Questions Section
+            if (serviceData['questions'] != null && serviceData['questions'].isNotEmpty)
+              ...serviceData['questions'].map<Widget>((question) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4.0),
+                  child: Text(
+                    question ?? 'No questions available',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                );
+              }).toList(),
+            if (serviceData['questions'] == null || serviceData['questions'].isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Text(
+                  'No questions available',
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
+              ),
           ],
         ),
       ),

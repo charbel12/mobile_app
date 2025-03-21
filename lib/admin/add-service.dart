@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:resapp/admin/admin_nav.dart';
 import 'dart:io';
 import 'package:resapp/tools/colors.dart';
 import 'package:resapp/tools/loading_state.dart';
-import 'package:resapp/tools/location_search.dart';
+import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddServicePage extends StatefulWidget {
   @override
@@ -17,7 +19,6 @@ class _AddServicePageState extends State<AddServicePage> {
   final TextEditingController _descriptionController = TextEditingController();
   final List<TextEditingController> _questionControllers = [];
   File? _selectedImage;
-  String? _selectedLocation;
   bool _isLoading = false;
   String _errorMessage = '';
 
@@ -69,12 +70,6 @@ class _AddServicePageState extends State<AddServicePage> {
       return;
     }
 
-    if (_selectedLocation == null) {
-      setState(() {
-        _errorMessage = 'Please select a location.';
-      });
-      return;
-    }
 
     if (_selectedImage == null) {
       setState(() {
@@ -96,12 +91,25 @@ class _AddServicePageState extends State<AddServicePage> {
     });
 
     try {
+      final selectedImage = _selectedImage;
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('userId');
+      String? imageUrl = null;
+      if (selectedImage != null) {
+        String fileName = path.basename(selectedImage.path);
+        String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+        String storagePath = 'services/$userId/$timestamp\_$fileName';
+
+        final storageRef = FirebaseStorage.instance.ref().child(storagePath);
+        await storageRef.putFile(selectedImage);
+        imageUrl = await storageRef.getDownloadURL();
+      }
+
       await FirebaseFirestore.instance.collection('services').add({
         'title': title,
         'description': description,
-        'img_path': _selectedImage!.path,
+        'img_path': imageUrl,
         'questions': questions,
-        'location': _selectedLocation,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -118,7 +126,6 @@ class _AddServicePageState extends State<AddServicePage> {
       _descriptionController.clear();
       setState(() {
         _selectedImage = null;
-        _selectedLocation = null;
         _questionControllers.clear();
         _errorMessage = '';
       });
@@ -223,14 +230,6 @@ class _AddServicePageState extends State<AddServicePage> {
               Text(
                 "Location",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              LocationSearchField(
-                onLocationSelected: (location) {
-                  setState(() {
-                    _selectedLocation = location;
-                  });
-                },
               ),
               SizedBox(height: 16),
               Text(

@@ -1,33 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:resapp/tools/colors.dart';
 
-class AdminNav extends StatefulWidget {
+class ContractorNav extends StatefulWidget {
   final int currentIndex;
 
-  const AdminNav({Key? key, required this.currentIndex}) : super(key: key);
+  const ContractorNav({Key? key, required this.currentIndex}) : super(key: key);
 
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
 }
 
-class _BottomNavBarState extends State<AdminNav> {
+class _BottomNavBarState extends State<ContractorNav> {
   void _onItemTapped(int index) {
     if(index ==  widget.currentIndex){
       return;
     }
-      switch (index) {
-        case 0:
-          Navigator.pushReplacementNamed(context, '/admin');
-          break;
-        case 1:
-          Navigator.pushReplacementNamed(context, '/admin/services');
-          break;
-        case 2:
-          Navigator.pushReplacementNamed(context, '/admin/contractor');
-          break;
-        case 3:
-          Navigator.pushReplacementNamed(context, '/admin/profile');
-          break;
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/contractor');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/contractor/profile');
+        break;
     }
   }
 
@@ -44,14 +38,6 @@ class _BottomNavBarState extends State<AdminNav> {
         BottomNavigationBarItem(
           icon: Icon(Icons.home),
           label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.sell),
-          label: 'Services',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.miscellaneous_services),
-          label: 'Contractors',
         ),
         BottomNavigationBarItem(
           icon: Icon(Icons.person),

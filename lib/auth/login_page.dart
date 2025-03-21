@@ -86,7 +86,7 @@ class _LoginPageState extends State<LoginPage> {
     } on FirebaseAuthException catch (e) {
       setState(() {
         _isLoading = false;
-        _errorMessage = e.message ?? 'An error occurred. Please try again.';
+        _errorMessage = 'An error occurred. Please try again.';
       });
     }
   }

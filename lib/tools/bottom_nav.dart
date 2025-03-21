@@ -12,6 +12,9 @@ class BottomNavBar extends StatefulWidget {
 
 class _BottomNavBarState extends State<BottomNavBar> {
   void _onItemTapped(int index) {
+    if (index == widget.currentIndex) {
+      return;
+    }
     if (index == 2) {
       _showAddOptionsDialog();
     } else {

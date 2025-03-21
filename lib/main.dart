@@ -21,6 +21,9 @@ import 'package:resapp/property/property_exchange.dart';
 import 'package:resapp/property/land_sale.dart';
 import 'package:resapp/property/land_rent.dart';
 
+import 'admin/admin_contractor.dart';
+import 'contractor/contractor_profile.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -123,6 +126,8 @@ class _MyAppState extends State<MyApp> {
           '/admin/services': (context) => AdminServicePage(),
           '/admin/profile': (context) => AdminProfilePage(),
           '/admin/add-service': (context) => AddServicePage(),
+          '/admin/contractor': (context) => AdminContractors(),
+          '/contractor/profile': (context) => ContractorProfilePage(),
         },
       ),
     );
