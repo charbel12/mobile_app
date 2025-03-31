@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:resapp/property/create_listing_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resapp/tools/auth_service.dart';
 import 'package:resapp/tools/error_boundary.dart';
@@ -15,12 +16,6 @@ import 'package:resapp/profile_page.dart';
 import 'package:resapp/admin/add-service.dart';
 import 'package:resapp/admin/services.dart';
 import 'package:resapp/admin/admin_profile.dart';
-import 'package:resapp/property/property_sale.dart';
-import 'package:resapp/property/property_rent.dart';
-import 'package:resapp/property/property_exchange.dart';
-import 'package:resapp/property/land_sale.dart';
-import 'package:resapp/property/land_rent.dart';
-
 import 'admin/admin_contractor.dart';
 import 'contractor/contractor_profile.dart';
 
@@ -116,11 +111,6 @@ class _MyAppState extends State<MyApp> {
           '/services': (context) => ServicesPage(),
           '/contractor': (context) => ContractorPage(),
           '/properties': (context) => PropertiesPage(),
-          '/property-sale': (context) => PropertySalePage(),
-          '/property-rent': (context) => PropertyRentPage(),
-          '/property-exchange': (context) => PropertyExchangePage(),
-          '/land-sale': (context) => LandSalePage(),
-          '/land-rent': (context) => LandRentPage(),
           '/profile': (context) => ProfilePage(),
           '/admin': (context) => AdminPage(),
           '/admin/services': (context) => AdminServicePage(),
@@ -128,6 +118,9 @@ class _MyAppState extends State<MyApp> {
           '/admin/add-service': (context) => AddServicePage(),
           '/admin/contractor': (context) => AdminContractors(),
           '/contractor/profile': (context) => ContractorProfilePage(),
+          '/listing-type': (context) => CreateListingScreen(
+            listingType: ModalRoute.of(context)!.settings.arguments as String,
+          ),
         },
       ),
     );

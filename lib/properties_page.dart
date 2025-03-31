@@ -17,7 +17,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
   String? _selectedPropertyType;
   bool _showFilters = false;
 
-  final List<String> _listingTypes = ['SALE', 'RENT', 'EXCHANGE'];
+  final List<String> _listingTypes = ['OFFER', 'REQUEST', 'EXCHANGE', 'PROJECTS'];
   final List<String> _propertyTypes = [
     'HOUSE',
     'APARTMENT',
@@ -272,7 +272,7 @@ class _PropertiesPageState extends State<PropertiesPage> {
                           .contains(_selectedListingType!);
 
                   final matchesPropertyType = _selectedPropertyType == null ||
-                      data['propertyType']
+                      data['houseType']
                           .toString()
                           .toUpperCase()
                           .contains(_selectedPropertyType!);

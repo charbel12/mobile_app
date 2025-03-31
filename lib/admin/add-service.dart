@@ -21,6 +21,7 @@ class _AddServicePageState extends State<AddServicePage> {
   File? _selectedImage;
   bool _isLoading = false;
   String _errorMessage = '';
+  String? _selectedServiceType; // New variable for service type
 
   @override
   void dispose() {
@@ -34,7 +35,7 @@ class _AddServicePageState extends State<AddServicePage> {
 
   Future<void> _pickImage() async {
     final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
       setState(() {
         _selectedImage = File(pickedFile.path);
@@ -70,7 +71,6 @@ class _AddServicePageState extends State<AddServicePage> {
       return;
     }
 
-
     if (_selectedImage == null) {
       setState(() {
         _errorMessage = 'Please select an image.';
@@ -81,6 +81,13 @@ class _AddServicePageState extends State<AddServicePage> {
     if (questions.isEmpty) {
       setState(() {
         _errorMessage = 'Please add at least one question.';
+      });
+      return;
+    }
+
+    if (_selectedServiceType == null) {
+      setState(() {
+        _errorMessage = 'Please select a service type.';
       });
       return;
     }
@@ -110,6 +117,7 @@ class _AddServicePageState extends State<AddServicePage> {
         'description': description,
         'img_path': imageUrl,
         'questions': questions,
+        'serviceType': _selectedServiceType, // Add this line
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -128,6 +136,7 @@ class _AddServicePageState extends State<AddServicePage> {
         _selectedImage = null;
         _questionControllers.clear();
         _errorMessage = '';
+        _selectedServiceType = null; // Clear the selected service type
       });
     } catch (e) {
       setState(() {
@@ -195,7 +204,7 @@ class _AddServicePageState extends State<AddServicePage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide:
-                        BorderSide(color: AppColors.res_green, width: 2.0),
+                    BorderSide(color: AppColors.res_green, width: 2.0),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
@@ -221,15 +230,32 @@ class _AddServicePageState extends State<AddServicePage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide:
-                        BorderSide(color: AppColors.res_green, width: 2.0),
+                    BorderSide(color: AppColors.res_green, width: 2.0),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
               ),
               SizedBox(height: 16),
               Text(
-                "Location",
+                "Service Type",
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              DropdownButton<String>(
+                value: _selectedServiceType,
+                hint: Text('Select Service Type'),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedServiceType = newValue;
+                  });
+                },
+                items: <String>['Real Estate services', 'Maintenance services', 'Specialization']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
               ),
               SizedBox(height: 16),
               Text(
@@ -242,24 +268,24 @@ class _AddServicePageState extends State<AddServicePage> {
                   children: [
                     _selectedImage != null
                         ? ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.file(
-                              _selectedImage!,
-                              height: 150,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            ),
-                          )
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        _selectedImage!,
+                        height: 150,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    )
                         : Container(
-                            height: 150,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child:
-                                Icon(Icons.image, size: 50, color: Colors.grey),
-                          ),
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child:
+                      Icon(Icons.image, size: 50, color: Colors.grey),
+                    ),
                     SizedBox(height: 8),
                     ElevatedButton.icon(
                       onPressed: _pickImage,
@@ -312,7 +338,7 @@ class _AddServicePageState extends State<AddServicePage> {
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderSide:
-                                    BorderSide(color: Colors.grey, width: 1.0),
+                                BorderSide(color: Colors.grey, width: 1.0),
                                 borderRadius: BorderRadius.circular(10.0),
                               ),
                               focusedBorder: OutlineInputBorder(

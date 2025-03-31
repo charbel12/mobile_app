@@ -35,90 +35,55 @@ class _BottomNavBarState extends State<BottomNavBar> {
     }
   }
 
+
   void _showAddOptionsDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(
-            "What would you like to list?",
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          title: Text("Create New Listing"),
+          content: Container(
+            width: double.maxFinite,
+            child: GridView.count(
+              shrinkWrap: true,
+              crossAxisCount: 2,
+              childAspectRatio: 1.2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              children: [
+                _buildGridOption(Icons.sell, "Offer"),
+                _buildGridOption(Icons.request_page, "Request"),
+                _buildGridOption(Icons.construction, "Projects"),
+                _buildGridOption(Icons.swap_horiz, "Exchange"),
+              ],
             ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildOptionGroup(
-                "Property",
-                [
-                  _DialogOption(
-                    icon: Icons.sell,
-                    title: "List for Sale",
-                    route: '/property-sale',
-                  ),
-                  _DialogOption(
-                    icon: Icons.home,
-                    title: "List for Rent",
-                    route: '/property-rent',
-                  ),
-                  _DialogOption(
-                    icon: Icons.swap_horiz,
-                    title: "List for Exchange",
-                    route: '/property-exchange',
-                  ),
-                ],
-              ),
-              SizedBox(height: 16),
-              _buildOptionGroup(
-                "Land",
-                [
-                  _DialogOption(
-                    icon: Icons.landscape,
-                    title: "List for Sale",
-                    route: '/land-sale',
-                  ),
-                  _DialogOption(
-                    icon: Icons.terrain,
-                    title: "List for Rent",
-                    route: '/land-rent',
-                  ),
-                ],
-              ),
-            ],
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
           ),
         );
       },
     );
   }
 
-  Widget _buildOptionGroup(String title, List<_DialogOption> options) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey[800],
-          ),
+  Widget _buildGridOption(IconData icon, String text) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: () {
+          Navigator.pop(context);
+          Navigator.pushNamed(
+            context,
+            '/listing-type',
+            arguments: text, // Pass category as String
+          );
+        },
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: AppColors.res_green),
+            SizedBox(height: 8),
+            Text(text),
+          ],
         ),
-        SizedBox(height: 8),
-        ...options.map((option) => ListTile(
-              leading: Icon(option.icon, color: AppColors.res_green),
-              title: Text(option.title),
-              contentPadding: EdgeInsets.symmetric(horizontal: 8),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.pushNamed(context, option.route);
-              },
-            )),
-      ],
+      ),
     );
   }
 

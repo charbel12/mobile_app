@@ -57,7 +57,7 @@ class _ServicesPageState extends State<ServicesPage> {
                 children: [
                   CircularProgressIndicator(
                     valueColor:
-                        AlwaysStoppedAnimation<Color>(AppColors.res_green),
+                    AlwaysStoppedAnimation<Color>(AppColors.res_green),
                   ),
                   SizedBox(height: 16),
                   Text(
@@ -85,37 +85,67 @@ class _ServicesPageState extends State<ServicesPage> {
             );
           }
 
-          return Padding(
+          Map<String, List<DocumentSnapshot>> groupedServices = {};
+          snapshot.data!.docs.forEach((service) {
+            String serviceType = service['serviceType'] ?? 'Uncategorized';
+            if (!groupedServices.containsKey(serviceType)) {
+              groupedServices[serviceType] = [];
+            }
+            groupedServices[serviceType]!.add(service);
+          });
+
+          return ListView(
             padding: const EdgeInsets.all(12.0),
-            child: GridView.builder(
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: MediaQuery.of(context).size.width > 600
-                    ? 3
-                    : 2, // 2-3 items per row
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio:
-                    0.8, // Adjust aspect ratio to balance image and text
-              ),
-              itemCount: snapshot.data!.docs.length,
-              itemBuilder: (context, index) {
-                var service = snapshot.data!.docs[index];
-                return ServiceCard(
-                  title: service['title'],
-                  imgPath: service['img_path'],
-                  description: service['description'],
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ServiceDetailsPage(service: service),
+            children: groupedServices.entries.map((entry) {
+              String serviceType = entry.key;
+              List<DocumentSnapshot> services = entry.value;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      serviceType,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                    );
-                  },
-                );
-              },
-            ),
+                    ),
+                  ),
+                  SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: services.length,
+                      itemBuilder: (context, index) {
+                        var service = services[index] as QueryDocumentSnapshot<Object?>;
+                        return Container(
+                          width: 200,
+                          margin: EdgeInsets.only(right: 12),
+                          child: ServiceCard(
+                            title: service['title'],
+                            imgPath: service['img_path'],
+                            description: service['description'],
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ServiceDetailsPage(service: service),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                ],
+              );
+            }).toList(),
           );
         },
       ),
@@ -151,98 +181,77 @@ class ServiceCard extends StatelessWidget {
               borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
               child: imgPath != null && imgPath!.isNotEmpty
                   ? imgPath!.startsWith('http') || imgPath!.startsWith('https')
-                      ? CachedNetworkImage(
-                          imageUrl: imgPath!,
-                          height: 120,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            height: 120,
-                            width: double.infinity,
-                            color: Colors.grey[200],
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                        AppColors.res_green),
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  'Loading...',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            height: 120,
-                            width: double.infinity,
-                            color: Colors.grey[200],
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.error_outline,
-                                    size: 32, color: Colors.grey[400]),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Error loading image',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      : Image.file(
-                          File(imgPath!),
-                          height: 120,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                            height: 120,
-                            width: double.infinity,
-                            color: Colors.grey[200],
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.error_outline,
-                                    size: 32, color: Colors.grey[400]),
-                                SizedBox(height: 4),
-                                Text(
-                                  'Error loading image',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                  : Container(
+                  ? CachedNetworkImage(
+                imageUrl: imgPath!,
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Container(
+                  height: 120,
+                  width: double.infinity,
+                  color: Colors.grey[200],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              AppColors.res_green),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Loading...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  height: 120,
+                  width: double.infinity,
+                  color: Colors.grey[200],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline,
+                          size: 32, color: Colors.grey[400]),
+                      SizedBox(height: 4),
+                      Text(
+                        'Error loading image',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+                  : Image.file(
+                File(imgPath!),
+                height: 120,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    Container(
                       height: 120,
                       width: double.infinity,
                       color: Colors.grey[200],
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.image_not_supported,
+                          Icon(Icons.error_outline,
                               size: 32, color: Colors.grey[400]),
                           SizedBox(height: 4),
                           Text(
-                            'No image available',
+                            'Error loading image',
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -251,6 +260,27 @@ class ServiceCard extends StatelessWidget {
                         ],
                       ),
                     ),
+              )
+                  : Container(
+                height: 120,
+                width: double.infinity,
+                color: Colors.grey[200],
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.image_not_supported,
+                        size: 32, color: Colors.grey[400]),
+                    SizedBox(height: 4),
+                    Text(
+                      'No image available',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
