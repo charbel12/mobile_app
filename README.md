@@ -26,7 +26,7 @@ A Flutter-based mobile application for property listings, including features for
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/your-username/property-listings-app.git
+   git clone https://github.com/charbel12/mobile_app.git
    ```
 2. **Navigate to the project directory:**
    ```sh
