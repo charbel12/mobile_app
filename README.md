@@ -54,9 +54,6 @@ property-listings-app/
 │── pubspec.yaml   # Dependencies
 ```
 
-## 📸 Screenshots
-(Add screenshots or GIFs showcasing the app's UI)
-
 ## 📌 Roadmap
 - [ ] Implement property search with advanced filters
 - [ ] Enable Google Maps integration for location-based search
